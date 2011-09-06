@@ -103,25 +103,70 @@ net estop-out => iocontrol.0.emc-enable-in
 
 ########################
 
-loadrt lut5 names=laser-final-lut
-
 # M3/M5, not realtime/coordinated but master on/off:
 net laser-master <= motion.spindle-on
 
 # M62/M63 coordinated or M64/M65 immediate firing:
 net laser-dout <= motion.digital-out-00
 
-#net laser-magic-z
-#net laser-raster
+########################
+
+loadrt comp names=raster-pos-gt-comp
+loadrt lut5 names=raster-read-lut,raster-fire-lut,laser-final-lut
+
+loadrt streamer depth=256 cfg=bbf
+addf streamer.0 laser-thread
+
+net raster-fire  <= streamer.0.pin.0
+net raster-rev   <= streamer.0.pin.1
+net raster-pos   <= streamer.0.pin.2
+net raster-empty <= streamer.0.empty
+net raster-read  => streamer.0.enable
+
+# XXX configurable axis 0
+net raster-pos-fb <= axis.0.joint-pos-fb
+
+# has the raster reached the target?
+# raster-pos-gt := raster-pos-fb > raster-pos
+addf raster-pos-gt-comp laser-thread
+net raster-pos     => raster-pos-gt-comp.in0
+net raster-pos-fb  => raster-pos-gt-comp.in1
+net raster-pos-gt  <= raster-pos-gt-comp.out
+
+# equation for reading the stream:
+# 1) XXX you can't avoid reading when empty or the state never changes
+# 2) flush (read all) when not running (M5 / laser-master off)
+# 3) when the laser position passes the target position in the right direction
+# raster-read := (~laser-master | (raster-pos-gt ^ raster-rev))
+addf raster-read-lut laser-thread
+#setp raster-read-lut.function 0x15511551 (with raster-empty)
+setp raster-read-lut.function 0x3ff33ff3
+net raster-empty  => raster-read-lut.in-0
+net laser-master  => raster-read-lut.in-1
+net raster-pos-gt => raster-read-lut.in-2
+net raster-rev    => raster-read-lut.in-3
+net raster-read   <= raster-read-lut.out
+
+# equation for firing the laser:
+# 1) never fire when empty (underflow or job finished)
+# 2) fire when raster-fire enabled
+# laser-raster := ~raster-empty & raster-fire
+addf raster-fire-lut laser-thread
+setp raster-fire-lut.function 0x44444444
+net raster-empty => raster-fire-lut.in-0
+net raster-fire  => raster-fire-lut.in-1
+net laser-raster <= raster-fire-lut.out
+
+########################
 
 # final laser equation:
 # laser-final <= laser-master & (laser-magic-z | laser-dout | laser-raster)
 addf laser-final-lut laser-thread
 setp laser-final-lut.function 0x0000fe00
 #net laser-magic-z => laser-final-lut.in-0
-net  laser-dout => laser-final-lut.in-1
-#net laser-raster => laser-final-lut.in-2
-net  laser-master => laser-final-lut.in-3
+net  laser-dout    => laser-final-lut.in-1
+net  laser-raster  => laser-final-lut.in-2
+net  laser-master  => laser-final-lut.in-3
 net laser-final <= laser-final-lut.out
 
 net laser-final => parport.0.pin-17-out
