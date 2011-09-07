@@ -1,0 +1,29 @@
+O144 sub
+  (raster scanning)
+  (O123 call [x] [y] [w] [h] [x-dpi] [overscan] [y-gap])
+  (           1   2   3   4    5       6            7  )
+  #11=[25.4 / #5]  (X per col)
+  #13=[#4 / #7]    (rows)
+  (gross hack to pass more params to already-running M144)
+  M145 P[#1] Q[#2]
+  M145 P[#3] Q[#4]
+  M145 P[#5] Q[#7]
+  (loop to produce raster scans)
+  #20=0
+  G0 X[#1-#6] Y[#2]
+  O101 while [#20 lt #13]
+    (move to next line)
+    G0 Y[#2-#20*#7]
+    (forward scan)
+    G1 X[#1+#3+#6]
+    #20=[#20+1]
+    O102 if [#20 lt #13]
+      (move to next line)
+      G0 Y[#2-#20*#7]
+      (backward scan)
+      G1 X[#1-#6]
+      #20=[#20+1]
+    O102 endif
+  O101 endwhile
+O144 endsub
+M2

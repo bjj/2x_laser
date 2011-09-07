@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+
+import os, sys, time
+import emc
+from PIL import Image
+from itertools import *
+from raster_utils import *
+
+P, Q = map(lambda x: float(x), sys.argv[1:])
+#print 'P=%g Q=%g' % (P, Q)
+
+ini = emc.ini('2x_Laser.ini')
+emc.nmlfile = ini.find('EMC', 'NML_FILE')
+
+axis = ini.find('RASTER', 'AXIS')
+if axis is None:
+    axis = 0
+
+stat = emc.stat()
+
+stat.poll()
+origin = stat.origin[axis]
+
+if stat.current_line < 0:
+    print 'cannot execute M101 from MDI'
+    sys.exit(1)
+
+image_name = get_comment(stat.file, stat.current_line)
+dirname = os.path.dirname(stat.file)
+image_name = os.path.normpath(os.path.join(dirname, image_name))
+# fuckity fuck XXX
+image_name = '../hello-world.png'
+image_name = '../vstripes.png'
+print 'image = %s' % image_name
+
+if os.fork():
+    # parent must wait until child is ready, then exit
+    #...
+    time.sleep(2)
+    sys.exit(0)
+else:
+    # XXX not sure if necessary
+    os.setsid()
+
+    stream = os.popen('tee halstreamer.log | halstreamer', 'w')
+
+    image = Image.open(image_name)
+
+    # wait for M145 to send us the image info
+    X, Y = recv_params()
+    W, H = recv_params()
+    XDPI, YSCANGAP = recv_params()
+
+    x_mmpd = 25.4 / XDPI
+    y_mmpd = YSCANGAP
+    origin += X
+
+    pix_w = int(W / x_mmpd)
+    pix_h = int(H / y_mmpd)
+    W = pix_w * x_mmpd
+    H = pix_h * y_mmpd
+
+    print 'rescaling to %u,%u' % (pix_w, pix_h)
+    #image = image.resize((pix_w, pix_h), Image.BICUBIC).convert('1')
+    image = image.resize((pix_w, pix_h), Image.NEAREST).convert('1')
+    image.save('actual.png')
+    # XXX possibly rotate based on axis
+
+    pix = list(image.getdata())
+
+    for y in xrange(0,pix_h):
+	forward = (y & 1) == 0
+
+	# laser is off until cued for this line:
+	if forward:
+	    stream.write('0 1 %0.3f\n' % (origin))
+	else:
+	    stream.write('0 0 %0.3f\n' % (origin + W))
+
+	# XXX!
+	if forward == (y > pix_h / 2):
+	    continue
+
+	row = pix[y * pix_w:(y + 1) * pix_w]
+	grouped = groupby(row)
+	groups = map(lambda (v,run): (v, len(list(run))), groupby(row))
+	if forward:
+	    x = 0
+	else:
+	    groups.reverse()
+	    x = pix_w
+	for v, run in groups:
+	    if (v <= 127):
+		# off until we hit start / on until end
+		if forward:
+		    stream.write('0 0 %0.3f\n' % (origin + x * x_mmpd))
+		    stream.write('1 0 %0.3f\n' % (origin + (x + run) * x_mmpd))
+		else:
+		    stream.write('0 1 %0.3f\n' % (origin + x * x_mmpd))
+		    stream.write('1 1 %0.3f\n' % (origin + (x - run) * x_mmpd))
+	    if forward:
+		x += run
+	    else:
+		x -= run
+
+    stream.close()
+
+    print 'DONE!'
