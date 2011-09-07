@@ -2,7 +2,7 @@
 # If you make changes to this file, they will be
 # overwritten when you run stepconf again
 
-loadrt threads name1=laser-thread period1=35000
+loadrt threads name1=laser-thread period1=[EMCMOT]BASE_PERIOD
 
 loadrt trivkins
 loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES
@@ -115,7 +115,14 @@ loadrt comp names=raster-pos-gt-comp
 loadrt lut5 names=raster-read-lut,raster-fire-lut,laser-final-lut
 
 loadrt streamer depth=256 cfg=bbf
+
+# The order of addf determines the order of execution.
+# Order these so that the inputs cascade correctly to the outputs:
+addf raster-pos-gt-comp laser-thread
+addf raster-read-lut laser-thread
 addf streamer.0 laser-thread
+addf raster-fire-lut laser-thread
+addf laser-final-lut laser-thread
 
 net raster-fire  <= streamer.0.pin.0
 net raster-rev   <= streamer.0.pin.1
@@ -128,7 +135,6 @@ net raster-pos-fb <= axis.0.joint-pos-fb
 
 # has the raster reached the target?
 # raster-pos-gt := raster-pos-fb > raster-pos
-addf raster-pos-gt-comp laser-thread
 net raster-pos     => raster-pos-gt-comp.in0
 net raster-pos-fb  => raster-pos-gt-comp.in1
 net raster-pos-gt  <= raster-pos-gt-comp.out
@@ -138,7 +144,6 @@ net raster-pos-gt  <= raster-pos-gt-comp.out
 # 2) flush (read all) when not running (M5 / laser-master off)
 # 3) when the laser position passes the target position in the right direction
 # raster-read := (~laser-master | (raster-pos-gt ^ raster-rev))
-addf raster-read-lut laser-thread
 #setp raster-read-lut.function 0x15511551 (with raster-empty)
 setp raster-read-lut.function 0x3ff33ff3
 net raster-empty  => raster-read-lut.in-0
@@ -151,7 +156,6 @@ net raster-read   <= raster-read-lut.out
 # 1) never fire when empty (underflow or job finished)
 # 2) fire when raster-fire enabled
 # laser-raster := ~raster-empty & raster-fire
-addf raster-fire-lut laser-thread
 setp raster-fire-lut.function 0x44444444
 net raster-empty => raster-fire-lut.in-0
 net raster-fire  => raster-fire-lut.in-1
@@ -161,7 +165,6 @@ net laser-raster <= raster-fire-lut.out
 
 # final laser equation:
 # laser-final <= laser-master & (laser-magic-z | laser-dout | laser-raster)
-addf laser-final-lut laser-thread
 setp laser-final-lut.function 0x0000fe00
 #net laser-magic-z => laser-final-lut.in-0
 net  laser-dout    => laser-final-lut.in-1
