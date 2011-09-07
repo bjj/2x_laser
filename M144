@@ -31,6 +31,11 @@ image_name = os.path.normpath(os.path.join(dirname, image_name))
 # fuckity fuck XXX
 image_name = '../hello-world.png'
 image_name = '../vstripes.png'
+#image_name = '../text.png'
+#image_name = '../timbers.png'
+image_name = '../radial.png'
+image_name = '../radial1.png'
+image_name = '../fringe.png'
 print 'image = %s' % image_name
 
 if os.fork():
@@ -60,7 +65,11 @@ else:
     W = pix_w * x_mmpd
     H = pix_h * y_mmpd
 
+    reverse_fudge = 0.0
+    #reverse_fudge = 0.339
+
     print 'rescaling to %u,%u' % (pix_w, pix_h)
+    #XXX
     #image = image.resize((pix_w, pix_h), Image.BICUBIC).convert('1')
     image = image.resize((pix_w, pix_h), Image.NEAREST).convert('1')
     image.save('actual.png')
@@ -75,11 +84,11 @@ else:
 	if forward:
 	    stream.write('0 1 %0.3f\n' % (origin))
 	else:
-	    stream.write('0 0 %0.3f\n' % (origin + W))
+	    stream.write('0 0 %0.3f\n' % (origin + W + x_mmpd))
 
-	# XXX!
-	if forward == (y > pix_h / 2):
-	    continue
+	if False:
+	    if forward == (y > pix_h / 2):
+		continue
 
 	row = pix[y * pix_w:(y + 1) * pix_w]
 	grouped = groupby(row)
@@ -96,8 +105,8 @@ else:
 		    stream.write('0 0 %0.3f\n' % (origin + x * x_mmpd))
 		    stream.write('1 0 %0.3f\n' % (origin + (x + run) * x_mmpd))
 		else:
-		    stream.write('0 1 %0.3f\n' % (origin + x * x_mmpd))
-		    stream.write('1 1 %0.3f\n' % (origin + (x - run) * x_mmpd))
+		    stream.write('0 1 %0.3f\n' % (origin + x * x_mmpd + reverse_fudge))
+		    stream.write('1 1 %0.3f\n' % (origin + (x - run) * x_mmpd + reverse_fudge))
 	    if forward:
 		x += run
 	    else:
