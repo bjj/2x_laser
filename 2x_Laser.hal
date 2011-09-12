@@ -14,11 +14,12 @@ loadrt pwmgen output_type=0
 
 addf parport.0.read base-thread
 addf stepgen.make-pulses base-thread
+# need capture-position in laser-thread for raster engraving:
+addf stepgen.capture-position laser-thread
 addf pwmgen.make-pulses base-thread
 addf parport.0.write base-thread
 addf parport.0.reset base-thread
 
-addf stepgen.capture-position servo-thread
 addf motion-command-handler servo-thread
 addf motion-controller servo-thread
 addf stepgen.update-freq servo-thread
@@ -111,6 +112,25 @@ net laser-dout <= motion.digital-out-00
 
 ########################
 
+# XXX configurable axis 0
+
+# Compute motion-offset by observing how it affects the cmd so we can
+# apply it manually to the fb.  That allows us to use axis.0.position-fb
+# directly (at base-thread rate) rather than waiting for servo-thread
+# do do the same math and give us axis.N.joint-pos-fb
+loadrt sum2 names=motion-offset-sub,motion-offset-apply
+addf motion-offset-sub servo-thread
+setp motion-offset-sub.gain1 -1
+net xpos-jcmd axis.0.joint-pos-cmd => motion-offset-sub.in0
+net xpos-cmd  axis.0.motor-pos-cmd => motion-offset-sub.in1
+net motion-offset                  <= motion-offset-sub.out
+
+addf motion-offset-apply laser-thread
+net xpos-fb       => motion-offset-apply.in0
+net motion-offset => motion-offset-apply.in1
+net raster-pos-fb <= motion-offset-apply.out
+
+
 loadrt comp names=raster-pos-gt-comp
 loadrt lut5 names=raster-read-lut,raster-fire-lut,laser-final-lut
 
@@ -129,9 +149,6 @@ net raster-rev   <= streamer.0.pin.1
 net raster-pos   <= streamer.0.pin.2
 net raster-empty <= streamer.0.empty
 net raster-read  => streamer.0.enable
-
-# XXX configurable axis 0
-net raster-pos-fb <= axis.0.joint-pos-fb
 
 # has the raster reached the target?
 # raster-pos-gt := raster-pos-fb > raster-pos
