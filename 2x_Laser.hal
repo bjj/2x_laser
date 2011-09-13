@@ -112,6 +112,18 @@ net laser-dout <= motion.digital-out-00
 
 ########################
 
+loadrt laserfreq
+addf laserfreq.0 laser-thread
+setp laserfreq.0.duration 222223
+#setp laserfreq.0.duration 1
+net current-vel motion.current-vel => laserfreq.0.velocity
+net laser-freq motion.spindle-speed-out => laserfreq.0.pulse-per-unit
+#net laser-master => laserfreq.0.enable
+net laser-dout => laserfreq.0.enable
+net laser-dout-pulsed <= laserfreq.0.pulse
+
+########################
+
 # XXX configurable axis 0
 
 # Compute motion-offset by observing how it affects the cmd so we can
@@ -183,10 +195,10 @@ net laser-raster <= raster-fire-lut.out
 # final laser equation:
 # laser-final <= laser-master & (laser-magic-z | laser-dout | laser-raster)
 setp laser-final-lut.function 0x0000fe00
-#net laser-magic-z => laser-final-lut.in-0
-net  laser-dout    => laser-final-lut.in-1
-net  laser-raster  => laser-final-lut.in-2
-net  laser-master  => laser-final-lut.in-3
+#net laser-magic-z     => laser-final-lut.in-0
+net  laser-dout-pulsed => laser-final-lut.in-1
+net  laser-raster      => laser-final-lut.in-2
+net  laser-master      => laser-final-lut.in-3
 net laser-final <= laser-final-lut.out
 
 net laser-final => parport.0.pin-17-out
