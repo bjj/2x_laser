@@ -5,10 +5,11 @@ pin in float velocity;
 pin in float pulse-per-unit;
 pin out bit pulse;
 pin out bit continuous;
-param rw float duration "Duration of each pulse in ns";
+param rw float length "Length of each pulse in units";
 variable float old_velocity;
 variable float interval;
 variable float accum;
+variable float duration;
 variable float pulse_remain;
 function _;
 license "GPL";
@@ -25,6 +26,7 @@ if (old_velocity != velocity) {
     // pulse interval is then 1/pps 
     interval = 1.0 / (velocity * pulse_per_unit);
     old_velocity = velocity;
+    duration = length / velocity;
 }
 
 accum += fperiod;
@@ -33,7 +35,7 @@ if (accum > interval) {
     if (accum > interval)
 	accum = 0.0;
     continuous = (pulse_remain > 0);
-    pulse_remain = duration / 1e9;
+    pulse_remain = duration;
 }
 
 if (pulse_remain > 0) {
