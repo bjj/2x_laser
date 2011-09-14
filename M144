@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, time
+import os, sys, time, glob
 import emc
 from PIL import Image
 from itertools import *
@@ -23,25 +23,20 @@ origin = stat.origin[axis]
 
 if stat.current_line < 0:
     print 'cannot execute M101 from MDI'
-    sys.exit(1)
+    sys.exit(2)
 
-image_name = get_comment(stat.file, stat.current_line)
-dirname = os.path.dirname(stat.file)
-image_name = os.path.normpath(os.path.join(dirname, image_name))
-# fuckity fuck XXX
-image_name = '../hello-world.png'
-image_name = '../vstripes.png'
-#image_name = '../text.png'
-#image_name = '../timbers.png'
-image_name = '../radial.png'
-image_name = '../radial1.png'
-image_name = '../fringe.png'
+# When using O- call the filename will be the XXX.ngc file :(
+#image_name = get_comment(stat.file, stat.current_line)
+#dirname = os.path.dirname(stat.file)
+#image_name = os.path.normpath(os.path.join(dirname, image_name))
+images = glob.glob('*-%u.*' % int(P))
+image_name = images[0]
 print 'image = %s' % image_name
 
 if os.fork():
     # parent must wait until child is ready, then exit
     #...
-    time.sleep(2)
+    time.sleep(1)
     sys.exit(0)
 else:
     # XXX not sure if necessary
@@ -70,8 +65,8 @@ else:
 
     print 'rescaling to %u,%u' % (pix_w, pix_h)
     #XXX
-    #image = image.resize((pix_w, pix_h), Image.BICUBIC).convert('1')
-    image = image.resize((pix_w, pix_h), Image.NEAREST).convert('1')
+    image = image.resize((pix_w, pix_h), Image.BICUBIC).convert('1')
+    #image = image.resize((pix_w, pix_h), Image.NEAREST).convert('1')
     image.save('actual.png')
     # XXX possibly rotate based on axis
 
