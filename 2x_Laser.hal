@@ -35,11 +35,10 @@ setp pwmgen.0.scale 1
 setp pwmgen.0.offset 0
 setp pwmgen.0.dither-pwm true
 
-net dout-01 <= motion.digital-out-01
 net dout-02 <= motion.digital-out-02
 net din-02 => motion.digital-in-02
 
-net dout-01 => parport.0.pin-01-out
+net laser-chiller => parport.0.pin-01-out
 net xstep => parport.0.pin-02-out
 setp parport.0.pin-02-out-reset 1
 net xdir => parport.0.pin-03-out
@@ -203,3 +202,21 @@ net laser-final <= laser-final-lut.out
 
 net laser-final => parport.0.pin-17-out
 
+########################
+# fan control
+
+loadrt oneshot names=laser-chiller-oneshot
+loadrt or2 names=laser-chiller-or
+addf laser-chiller-oneshot servo-thread
+addf laser-chiller-or servo-thread
+
+net laser-master        => laser-chiller-oneshot.in
+net laser-chiller-extra <= laser-chiller-oneshot.out
+setp laser-chiller-oneshot.retriggerable 1
+setp laser-chiller-oneshot.width [LASER]EXTRA_CHILLER_TIME
+setp laser-chiller-oneshot.rising 0
+setp laser-chiller-oneshot.falling 1
+
+net laser-master        => laser-chiller-or.in0
+net laser-chiller-extra => laser-chiller-or.in1
+net laser-chiller       <= laser-chiller-or.out
