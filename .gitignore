@@ -1,0 +1,12 @@
+*.ngc
+*.bak
+*.var
+*.ko
+*.bmp
+*.jpg
+*.png
+tool.tbl
+autosave.*
+*.pyc
+*.pyo
+*.log
