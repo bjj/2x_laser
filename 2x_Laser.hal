@@ -113,11 +113,9 @@ net laser-dout <= motion.digital-out-00
 
 loadrt laserfreq
 addf laserfreq.0 laser-thread
-setp laserfreq.0.length 0.005
-#setp laserfreq.0.duration 1
+setp laserfreq.0.length [LASER]PULSED_CUT_LENGTH
 net current-vel motion.current-vel => laserfreq.0.velocity
 net laser-freq motion.spindle-speed-out => laserfreq.0.pulse-per-unit
-#net laser-master => laserfreq.0.enable
 net laser-dout => laserfreq.0.enable
 net laser-dout-pulsed <= laserfreq.0.pulse
 
