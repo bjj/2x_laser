@@ -1,0 +1,12 @@
+# this must be symlinked or copied to ~/.axisrc
+
+def laser_hide(widget):
+    widget.winfo_manager()
+    widget.tk.call(widget.winfo_manager(), "forget", widget)
+
+laser_hide(widgets.view_z2)
+laser_hide(widgets.view_x)
+laser_hide(widgets.view_y)
+laser_hide(widgets.view_p)
+
+commands.set_view_z()
