@@ -6,41 +6,42 @@ pin in float pulse-per-unit;
 pin out bit pulse;
 pin out bit continuous;
 param rw float length "Length of each pulse in units";
-variable float old_velocity;
+function make_pulses fp "Add to fast thread to make laser pulses";
+function update fp "Add to update thread to compute pulse parameters";
 variable float interval;
 variable float accum;
 variable float duration;
 variable float pulse_remain;
-function _;
 license "GPL";
 ;;
-if (!enable || velocity == 0.0 || pulse_per_unit == 0.0) {
-    accum = 0;
-    pulse = 0;
-    continuous = 0;
-    return;
-}
-
-if (old_velocity != velocity) {
+FUNCTION(update) {
     // velocity * pulse-per-unit gives pulses per second
     // pulse interval is then 1/pps 
     interval = 1.0 / (velocity * pulse_per_unit);
-    old_velocity = velocity;
     duration = length / velocity;
 }
 
-accum += fperiod;
-if (accum > interval) {
-    accum -= interval;
-    if (accum > interval)
-	accum = 0.0;
-    continuous = (pulse_remain > 0);
-    pulse_remain = duration;
-}
+FUNCTION(make_pulses) {
+    if (!enable || velocity == 0.0 || pulse_per_unit == 0.0) {
+	accum = 0;
+	pulse = 0;
+	continuous = 0;
+	return;
+    }
 
-if (pulse_remain > 0) {
-    pulse = 1;
-    pulse_remain -= fperiod;
-} else {
-    pulse = 0;
+    accum += fperiod;
+    if (accum > interval) {
+	accum -= interval;
+	if (accum > interval)
+	    accum = 0.0;
+	continuous = (pulse_remain > 0);
+	pulse_remain = duration;
+    }
+
+    if (pulse_remain > 0) {
+	pulse = 1;
+	pulse_remain -= fperiod;
+    } else {
+	pulse = 0;
+    }
 }
