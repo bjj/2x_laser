@@ -53,6 +53,7 @@ setp parport.0.pin-07-out-invert 1
 net dout-02 => parport.0.pin-08-out
 net laser-pwm => parport.0.pin-14-out
 net xenable => parport.0.pin-16-out
+net laser-final => parport.0.pin-17-out
 
 net home-x <= parport.0.pin-10-in-not
 net home-y <= parport.0.pin-11-in-not
@@ -116,8 +117,9 @@ addf laserfreq.0 laser-thread
 setp laserfreq.0.length [LASER]PULSED_CUT_LENGTH
 net current-vel motion.current-vel => laserfreq.0.velocity
 net laser-freq motion.spindle-speed-out => laserfreq.0.pulse-per-unit
-net laser-dout => laserfreq.0.enable
-net laser-dout-pulsed <= laserfreq.0.pulse
+#net laser-dout => laserfreq.0.enable
+setp laserfreq.0.enable 1
+net laser-pulsed <= laserfreq.0.pulse
 
 ########################
 
@@ -189,16 +191,20 @@ net laser-raster <= raster-fire-lut.out
 
 ########################
 
-# final laser equation:
-# laser-final <= laser-master & (laser-magic-z | laser-dout | laser-raster)
-setp laser-final-lut.function 0x0000fe00
-#net laser-magic-z     => laser-final-lut.in-0
-net  laser-dout-pulsed => laser-final-lut.in-1
-net  laser-raster      => laser-final-lut.in-2
-net  laser-master      => laser-final-lut.in-3
-net laser-final <= laser-final-lut.out
+# Final laser equation:  When laser-master is enabled (M3) fire for
+# raster or at pulse rate when cutting:
+#
+# laser-final <= laser-master &
+#                    (laser-raster |
+#                   ((laser-magic-z | laser-dout) & laser-pulsed))
 
-net laser-final => parport.0.pin-17-out
+setp laser-final-lut.function 0xfeaa0000
+net  laser-raster      => laser-final-lut.in-0
+net  laser-dout        => laser-final-lut.in-1
+#net laser-magic-z     => laser-final-lut.in-2
+net  laser-pulsed      => laser-final-lut.in-3
+net  laser-master      => laser-final-lut.in-4
+net laser-final <= laser-final-lut.out
 
 ########################
 # fan control
