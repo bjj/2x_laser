@@ -42,7 +42,8 @@ else:
     # XXX not sure if necessary
     os.setsid()
 
-    stream = os.popen('tee halstreamer.log | halstreamer', 'w')
+    #stream = os.popen('tee halstreamer.log | halstreamer', 'w')
+    stream = os.popen('halstreamer', 'w')
 
     image = Image.open(image_name)
 
