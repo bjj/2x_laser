@@ -46,9 +46,9 @@ setp parport.0.pin-03-out-invert 1
 net ystep => parport.0.pin-04-out
 setp parport.0.pin-04-out-reset 1
 net ydir => parport.0.pin-05-out
-net zstep => parport.0.pin-06-out
+net ustep => parport.0.pin-06-out
 setp parport.0.pin-06-out-reset 1
-net zdir => parport.0.pin-07-out
+net udir => parport.0.pin-07-out
 setp parport.0.pin-07-out-invert 1
 net dout-02 => parport.0.pin-08-out
 net laser-pwm => parport.0.pin-14-out
@@ -87,17 +87,19 @@ net ydir <= stepgen.1.dir
 net yenable axis.1.amp-enable-out => stepgen.1.enable
 net home-y => axis.1.home-sw-in
 
-setp stepgen.2.position-scale [AXIS_2]SCALE
+setp stepgen.2.position-scale [AXIS_6]SCALE
 setp stepgen.2.steplen 1000
 setp stepgen.2.stepspace 0
 setp stepgen.2.dirhold 200
 setp stepgen.2.dirsetup 200
-setp stepgen.2.maxaccel [AXIS_2]STEPGEN_MAXACCEL
-net zpos-cmd axis.2.motor-pos-cmd => stepgen.2.position-cmd
-net zpos-fb stepgen.2.position-fb => axis.2.motor-pos-fb
-net zstep <= stepgen.2.step
-net zdir <= stepgen.2.dir
-net zenable axis.2.amp-enable-out => stepgen.2.enable
+setp stepgen.2.maxaccel [AXIS_6]STEPGEN_MAXACCEL
+net upos-cmd axis.6.motor-pos-cmd => stepgen.2.position-cmd
+net upos-fb stepgen.2.position-fb => axis.6.motor-pos-fb
+net ustep <= stepgen.2.step
+net udir <= stepgen.2.dir
+net uenable axis.6.amp-enable-out => stepgen.2.enable
+
+net zpos-cmd-fb <= axis.2.motor-pos-cmd => axis.2.motor-pos-fb
 
 net estop-out <= iocontrol.0.user-enable-out
 net estop-out => iocontrol.0.emc-enable-in
@@ -143,7 +145,7 @@ net motion-offset => motion-offset-apply.in1
 net raster-pos-fb <= motion-offset-apply.out
 
 
-loadrt comp names=raster-pos-gt-comp
+loadrt comp names=raster-pos-gt-comp,laser-magic-z-comp
 loadrt lut5 names=raster-read-lut,raster-fire-lut,laser-final-lut
 
 loadrt streamer depth=256 cfg=bbf
@@ -192,6 +194,13 @@ net laser-raster <= raster-fire-lut.out
 
 ########################
 
+addf laser-magic-z-comp servo-thread
+net zpos-fb <= axis.2.joint-pos-fb => laser-magic-z-comp.in0
+setp laser-magic-z-comp.in1 0.0
+net laser-magic-z <= laser-magic-z-comp.out
+
+########################
+
 # Final laser equation:  When laser-master is enabled (M3) fire for
 # raster or at pulse rate when cutting:
 #
@@ -202,13 +211,13 @@ net laser-raster <= raster-fire-lut.out
 setp laser-final-lut.function 0xfeaa0000
 net  laser-raster      => laser-final-lut.in-0
 net  laser-dout        => laser-final-lut.in-1
-#net laser-magic-z     => laser-final-lut.in-2
+net  laser-magic-z     => laser-final-lut.in-2
 net  laser-pulsed      => laser-final-lut.in-3
 net  laser-master      => laser-final-lut.in-4
 net laser-final <= laser-final-lut.out
 
 ########################
-# fan control
+# chiller/assist-air control
 
 loadrt oneshot names=laser-chiller-oneshot
 loadrt or2 names=laser-chiller-or
