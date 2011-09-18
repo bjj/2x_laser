@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import os, sys, time, glob
-import emc
-from PIL import Image
+from subprocess import *
 from itertools import *
+from PIL import Image
 from raster_utils import *
+import emc
 
 P, Q = map(lambda x: float(x), sys.argv[1:])
 #print 'P=%g Q=%g' % (P, Q)
@@ -42,8 +43,8 @@ else:
     # XXX not sure if necessary
     os.setsid()
 
-    #stream = os.popen('tee halstreamer.log | halstreamer', 'w')
-    stream = os.popen('halstreamer', 'w')
+    streamer = Popen(['halstreamer'], stdin=PIPE)
+    stream = streamer.stdin
 
     image = Image.open(image_name)
 
@@ -109,5 +110,6 @@ else:
 		x -= run
 
     stream.close()
+    streamer.wait()
 
     print 'DONE!'
