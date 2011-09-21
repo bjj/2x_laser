@@ -1,13 +1,14 @@
 component laserfreq "Pulse driver for CO2 Laser";
 author "Ben Jackson <ben@ben.com>";
-pin in bit enable;
-pin in float velocity;
-pin in float pulse-per-unit;
-pin out bit pulse;
-pin out bit continuous;
+pin in bit enable "Enable pulse generation";
+pin in float velocity "Velocity of the laser head (e.g. motion.current-vel)";
+pin in float pulse-per-unit "How many pulses per unit distance";
+pin out bit pulse "Output firing pulse";
+pin out bit continuous "True if current inputs are causing continuous (not pulsed) output";
 param rw float length "Length of each pulse in units";
 function make_pulses fp "Add to fast thread to make laser pulses";
 function update fp "Add to update thread to compute pulse parameters";
+variable int updated;
 variable float interval;
 variable float accum;
 variable float duration;
@@ -15,15 +16,25 @@ variable float pulse_remain;
 license "GPL";
 ;;
 FUNCTION(update) {
-    // velocity * pulse-per-unit gives pulses per second
-    // pulse interval is then 1/pps 
-    interval = 1.0 / (velocity * pulse_per_unit);
-    duration = length / velocity;
+    if (velocity == 0.0 || pulse_per_unit == 0) {
+	updated = 0;
+    } else {
+	// velocity * pulse-per-unit gives pulses per second
+	// pulse interval is then 1/pps 
+	interval = 1.0 / (velocity * pulse_per_unit);
+
+	// each pulse is specified as a distance which is
+	// converted to a duration by velocity:
+	duration = length / velocity;
+
+	updated = 1;
+    }
 }
 
 FUNCTION(make_pulses) {
-    if (!enable || velocity == 0.0 || pulse_per_unit == 0.0) {
+    if (!enable || !updated) {
 	accum = 0;
+	pulse_remain = 0;
 	pulse = 0;
 	continuous = 0;
 	return;
