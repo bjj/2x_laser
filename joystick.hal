@@ -1,0 +1,32 @@
+# Include your customized HAL commands here
+# The commands in this file are run after the AXIS GUI (including PyVCP panel) starts
+
+
+##########################
+# Joystick
+
+loadusr -W hal_input -KRAL Gravis
+
+loadrt mux2 names=joystick-speeds
+addf joystick-speeds servo-thread
+setp joystick-speeds.in0 1000
+setp joystick-speeds.in1 28000
+net joystick-speed-sel <= input.0.btn-tl2 => joystick-speeds.sel # "select"
+net joystick-speed <= joystick-speeds.out => halui.jog-speed
+
+net joy-x-jog <= input.0.abs-x-position => halui.jog.0.analog
+net joy-y-jog <= input.0.abs-y-position => halui.jog.1.analog
+net joy-u-jog-up <= input.0.btn-y  => halui.jog.6.plus  # trigger left up
+net joy-u-jog-dn <= input.0.btn-tl => halui.jog.6.minus # trigger left down
+
+# reverse Y
+setp input.0.abs-y-scale -127.5
+
+net joy-prog-run   <= input.0.btn-c => halui.program.run   # green
+net joy-prog-stop  <= input.0.btn-a => halui.program.stop  # red
+net joy-prog-pause <= input.0.btn-b => halui.program.pause # yellow
+#input.0.btn-x # blue
+#input.0.btn-z # trigger right up
+#input.0.btn-tr # trigger right down
+#input.0.btn-tr2 # "start"
+
