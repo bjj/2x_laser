@@ -31,6 +31,7 @@ if stat.current_line < 0:
 #dirname = os.path.dirname(stat.file)
 #image_name = os.path.normpath(os.path.join(dirname, image_name))
 images = glob.glob('*-%u.*' % int(P))
+# XXX BETTER ERROR HANDLING
 image_name = images[0]
 print 'image = %s' % image_name
 
@@ -51,9 +52,17 @@ else:
     # wait for M145 to send us the image info
     X, Y = recv_params()
     W, H = recv_params()
-    XDPI, YSCANGAP = recv_params()
+    XSCANGAP, YSCANGAP = recv_params()
 
-    x_mmpd = 25.4 / XDPI
+    if stat.program_units == 1:
+	X *= 25.4
+	Y *= 25.4
+	W *= 25.4
+	H *= 25.4
+	XSCANGAP *= 25.4
+	YSCANGAP *= 25.4
+
+    x_mmpd = XSCANGAP
     y_mmpd = YSCANGAP
     origin += X
 
