@@ -5,13 +5,12 @@ pin in float velocity "Velocity of the laser head (e.g. motion.current-vel)";
 pin in float pulse-per-unit "How many pulses per unit distance";
 pin out bit pulse "Output firing pulse";
 pin out bit continuous "True if current inputs are causing continuous (not pulsed) output";
-param rw float length "Length of each pulse in units";
+param rw float duration "Duration of each pulse in seconds";
 function make_pulses fp "Add to fast thread to make laser pulses";
 function update fp "Add to update thread to compute pulse parameters";
 variable int updated;
 variable float interval;
 variable float accum;
-variable float duration;
 variable float pulse_remain;
 license "GPL";
 ;;
@@ -22,10 +21,6 @@ FUNCTION(update) {
 	// velocity * pulse-per-unit gives pulses per second
 	// pulse interval is then 1/pps 
 	interval = 1.0 / (velocity * pulse_per_unit);
-
-	// each pulse is specified as a distance which is
-	// converted to a duration by velocity:
-	duration = length / velocity;
 
 	updated = 1;
     }
