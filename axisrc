@@ -1,14 +1,18 @@
 # this must be symlinked or copied to ~/.axisrc
+# or selected via USER_COMMAND_FILE in the INI
 
+# Helper to remove unneeded widgets
 def laser_hide(widget):
     widget.winfo_manager()
     widget.tk.call(widget.winfo_manager(), "forget", widget)
 
+# Remove view angles which make no sense for a laser cutter
 laser_hide(widgets.view_z2)
 laser_hide(widgets.view_x)
 laser_hide(widgets.view_y)
 laser_hide(widgets.view_p)
 
+# Force view to top-down on startup
 commands.set_view_z()
 
 # Attach table U to traditional Pg Up/Dn
