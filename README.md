@@ -83,7 +83,15 @@ the subroutine in O145 sweeps out the raster pattern.
 Due to limitations in EMC2 there is no way to pass a filename for the
 rastering process.  Instead you must put a number in the filename, such
 as "flower-123.png".  The text name is for your convenience, but only the
-"123" will select the image from within gcode.
+"123" will select the image from within gcode.  The program will search for
+the wildcard `*-123.*` in the current directory (wherever EMC2 was launched).
+**This might not be the same as the gcode directory.**  This is another EMC2
+limitation.
+
+The image can be of any size or shape and will be rescaled and dithered to
+black and white to match the parameters of the engraving (see below).  You
+can provide a black and white image with the correct DPI and size and it will
+be used unmodified.
 
 To do a raster engraving, the spindle must be enabled with M3 (as always
 for any laser firing operation).  However, the pulse setting does not
@@ -99,7 +107,7 @@ just need to be in the appropriate units:
 
 Where the parameters are:
 
-* pic - number used to select the image file (with the wildcard *-pic.*)
+* pic - number used to select the image file (with the wildcard `*-pic.*`)
 * x, y - the upper lefthand corner of the engraving (the spot where the image's (0,0) will appear)
 * w, h - the width and height of the engraving
 * x-gap - units per pixel column (in mm, 25.4/DPI, in inches 1/DPI)
@@ -144,8 +152,11 @@ Installation
 
 This is based on an installed copy of the EMC2 Ubuntu 10.04 LTS Live CD.
 
-Install the custom laser pulse HAL component with:
+Install the custom laser pulse HAL component.  The first command installs
+the necessary tools in case you don't have them.  For more information see
+http://wiki.linuxcnc.org/emcinfo.pl?ContributedComponents
 
+    sudo apt-get install emc2-dev build-essential
     sudo comp --install laserfreq.comp
 
 The configuration will not work without that component installed.
@@ -162,7 +173,7 @@ latency-test program:  http://wiki.linuxcnc.org/emcinfo.pl?Latency-Test
 
 My system was able to use a [EMCMOT]BASE_PERIOD of 27000 (27us) which
 (along with the microstepping setting) dictates my system's maximum velocity.
-If you chnage SCALE or BASE_PERIOD you will need to compute new MAX_VELOCITY
+If you change SCALE or BASE_PERIOD you will need to compute new MAX_VELOCITY
 settings for each axis.
 
 If your stepper configuration does not match what is described above,
