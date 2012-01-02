@@ -75,10 +75,10 @@ that removes smoke from the laser.
 Raster Engraving
 ----------------
 
-Raster operation is done by calling a subroutine O144 from within gcode
+Raster operation is done by calling a subroutine O145 from within gcode
 with several parameters.  It invokes M144 and M145 which are external
 python scripts.  Those stream data back into EMC2's realtime engine while
-the subroutine in O144 sweeps out the raster pattern.
+the subroutine in O145 sweeps out the raster pattern.
 
 Due to limitations in EMC2 there is no way to pass a filename for the
 rastering process.  Instead you must put a number in the filename, such
@@ -87,7 +87,10 @@ as "flower-123.png".  The text name is for your convenience, but only the
 
 To do a raster engraving, the spindle must be enabled with M3 (as always
 for any laser firing operation).  However, the pulse setting does not
-matter and all pulsing is controlled by the engraving process:
+matter and all pulsing is controlled by the engraving process.
+
+The O145 script will operate in inches or mm (G20 or G21) and all sizes
+just need to be in the appropriate units:
 
     M3 S1         (enable spindle)
     M68 E0 Q0.2   (choose an engraving power)
@@ -98,9 +101,9 @@ Where the parameters are:
 
 * pic - number used to select the image file (with the wildcard *-pic.*)
 * x, y - the upper lefthand corner of the engraving (the spot where the image's (0,0) will appear)
-* w, y - the width and height of the engraving
-* x-gap - mm per pixel column (25.4/DPI)
-* y-gap - mm per pixel row (25.4/DPI)
+* w, h - the width and height of the engraving
+* x-gap - units per pixel column (in mm, 25.4/DPI, in inches 1/DPI)
+* y-gap - units per pixel row (see x-gap)
 * overscan - overshoot of the laser carriage to either side of the image
 
 The x-gap and y-gap are independent.  Choosing a y-gap of 0.085mm (about
