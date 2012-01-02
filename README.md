@@ -184,3 +184,20 @@ If your stepper configuration varies significantly from Bart's Pololu
 board, you may need to just start by running "stepconf" to find the
 several detailed parameters required of your stepper driver.  You can then
 port these values into the 2x_Laser HAL file.
+
+Acknowledgements
+================
+
+Jedediah Smith at Hacklab Toronto created an EMC2 configuration for their
+laser which opened my eyes to how powerful the HAL is.  In particular the
+use of halstreamer synchronized with an external script is key to the
+raster implementation.
+
+Barton Dring's buildlog.net 2.x laser is one of the best open hardware
+projects on the net.  The engineering work and documentation is second to
+none.  Without his work on the plans and kits I wouldn't own a laser cutter.
+
+Dirk Van Essendelft has done numerous experiments in DIY lasercutting
+which he has documented on the buildlog.net forums.  His research into the
+behavior of PPI with our CO2 lasers lead to improved the performance of the
+PPI implementation in this configuration.
