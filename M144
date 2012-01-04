@@ -54,13 +54,19 @@ else:
     W, H = recv_params()
     XSCANGAP, YSCANGAP = recv_params()
 
-    if stat.program_units == 1:
-	X *= 25.4
-	Y *= 25.4
-	W *= 25.4
-	H *= 25.4
-	XSCANGAP *= 25.4
-	YSCANGAP *= 25.4
+    # program units are 1:inch, 2:mm, while linear_units are 0:inch, 1:mm
+    if stat.program_units == 1 and stat.linear_units == 1:
+	scale = 25.4
+    elif stat.program_units == 2 and stat.linear_units == 0:
+	scale = 1/25.4
+    else:
+	scale = 1
+    X *= scale
+    Y *= scale
+    W *= scale
+    H *= scale
+    XSCANGAP *= scale
+    YSCANGAP *= scale
 
     x_mmpd = XSCANGAP
     y_mmpd = YSCANGAP
