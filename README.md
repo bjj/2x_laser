@@ -84,9 +84,10 @@ Due to limitations in EMC2 there is no way to pass a filename for the
 rastering process.  Instead you must put a number in the filename, such
 as "flower-123.png".  The text name is for your convenience, but only the
 "123" will select the image from within gcode.  The program will search for
-the wildcard `*-123.*` in the current directory (wherever EMC2 was launched).
-**This might not be the same as the gcode directory.**  This is another EMC2
-limitation.
+the wildcard `*-123.*` in [RASTER]IMAGE_PATH (can be a colon separated list)
+and use the first one it finds.  If that is not configured in your INI it
+will default to your home directory.  If it does not find the file it will
+prompt you with a file selector.
 
 The image can be of any size or shape and will be rescaled and dithered to
 black and white to match the parameters of the engraving (see below).  You
