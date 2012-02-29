@@ -68,7 +68,7 @@ automatically whenever M3 (the master laser enable) is on and stays on for
 Blower Control
 --------------
 
-There is another digital output on parallel port pin 2.  It can be
+There is another digital output on parallel port pin 8.  It can be
 directly controlled with M62/63/64/65 P2.  I use it to control the blower
 that removes smoke from the laser.
 
