@@ -6,6 +6,7 @@ pin in float pulse-per-unit "How many pulses per unit distance";
 pin out bit pulse "Output firing pulse";
 pin out bit continuous "True if current inputs are causing continuous (not pulsed) output";
 param rw float duration "Duration of each pulse in seconds";
+param rw float min-off-duration "If nonzero force continuous pulsing with at least this much off-time in seconds";
 function make_pulses fp "Add to fast thread to make laser pulses";
 function update fp "Add to update thread to compute pulse parameters";
 variable int updated;
@@ -21,6 +22,8 @@ FUNCTION(update) {
 	// velocity * pulse-per-unit gives pulses per second
 	// pulse interval is then 1/pps 
 	interval = 1.0 / (velocity * pulse_per_unit);
+	if (min_off_duration > 0 && interval < min_off_duration + duration)
+	    interval = min_off_duration + duration;
 
 	updated = 1;
     }

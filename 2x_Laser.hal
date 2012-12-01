@@ -122,6 +122,7 @@ loadrt laserfreq
 addf laserfreq.0.make-pulses laser-thread
 addf laserfreq.0.update servo-thread
 setp laserfreq.0.duration [LASER]PULSED_CUT_DURATION
+setp laserfreq.0.min-off-duration [LASER]PULSED_CUT_CONTINUOUS
 net current-vel motion.current-vel => laserfreq.0.velocity
 net laser-freq motion.spindle-speed-out => laserfreq.0.pulse-per-unit
 #net laser-dout => laserfreq.0.enable
