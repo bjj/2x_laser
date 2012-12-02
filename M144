@@ -142,6 +142,12 @@ else:
 	    else:
 		x -= run
 
+    # finally: laser is off once clearing raster area
+    if forward:
+	stream.write('0 0 %0.3f\n' % (origin + W + x_mmpd))
+    else:
+	stream.write('0 1 %0.3f\n' % (origin))
+
     stream.close()
     streamer.wait()
 
