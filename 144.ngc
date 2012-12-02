@@ -2,8 +2,8 @@ O144 sub
   (raster scanning)
   (O123 call [pic] [x] [y] [w] [h] [x-dpi] [overscan] [y-gap])
   (           1     2   3   4   5     6        7         8 )
-  #11=[25.4 / #6]  (X per col)
-  #13=[#5 / #8]    (rows)
+  #11=[25.4 / #6]       (X per col)
+  #13=[FIX[#5 / #8]]    (rows)
   (gross hack to pass several params to M144)
   M144 P[#1]
   M145 P[#2] Q[#3]
