@@ -121,12 +121,7 @@ else:
 	else:
 	    stream.write('0 0 %0.3f\n' % (origin + W + x_mmpd))
 
-	if False:
-	    if forward == (y > pix_h / 2):
-		continue
-
 	row = pix[y * pix_w:(y + 1) * pix_w]
-	grouped = groupby(row)
 	groups = map(lambda (v,run): (v, len(list(run))), groupby(row))
 	if forward:
 	    x = 0
