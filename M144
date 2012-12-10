@@ -74,7 +74,7 @@ else:
 
     # wait for M145 to send us the image info
     X, Y = recv_params()
-    W, H = recv_params()
+    W, ROWS = recv_params()
     XSCANGAP, YSCANGAP = recv_params()
 
     # program units are 1:inch, 2:mm, while linear_units are 0:inch, 1:mm
@@ -87,7 +87,7 @@ else:
     X *= scale
     Y *= scale
     W *= scale
-    H *= scale
+    #H *= scale
     XSCANGAP *= scale
     YSCANGAP *= scale
 
@@ -96,12 +96,10 @@ else:
     origin += X
 
     pix_w = int(W / x_mmpd)
-    pix_h = int(H / y_mmpd)
+    pix_h = int(ROWS + 0.5)
     W = pix_w * x_mmpd
-    H = pix_h * y_mmpd
 
     reverse_fudge = 0.0
-    #reverse_fudge = 0.339
 
     print 'rescaling to %u,%u' % (pix_w, pix_h)
     #XXX

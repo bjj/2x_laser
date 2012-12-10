@@ -3,10 +3,11 @@ O145 sub
   (O145 call [pic] [x] [y] [w] [h] [x-gap] [y-gap] [overscan])
   (           1     2   3   4   5     6        7       8 )
   #13=[FIX[#5 / #7]]    (rows)
+  (print,raster passes = #13)
   (gross hack to pass several params to M144)
   M144 P[#1]
   M145 P[#2] Q[#3]
-  M145 P[#4] Q[#5]
+  M145 P[#4] Q[#13]
   M145 P[#6] Q[#7]
   (loop to produce raster scans)
   #20=0

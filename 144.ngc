@@ -4,10 +4,11 @@ O144 sub
   (           1     2   3   4   5     6        7         8 )
   #11=[25.4 / #6]       (X per col)
   #13=[FIX[#5 / #8]]    (rows)
+  (print,raster passes = #13)
   (gross hack to pass several params to M144)
   M144 P[#1]
   M145 P[#2] Q[#3]
-  M145 P[#4] Q[#5]
+  M145 P[#4] Q[#13]
   M145 P[#11] Q[#8]
   (loop to produce raster scans)
   #20=0
