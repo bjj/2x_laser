@@ -1,14 +1,14 @@
 Overview
 ========
 
-This is an EMC2 configuration for the Buildlog.net 2.x laser cutter.
+This is a LinuxCNC 2.5 configuration for the Buildlog.net 2.x laser cutter.
 It has the following features:
 
 * X/Y axis for the laser gantry and carriage.  Configured for MXL belts, 400 step motors and 8x microstepping.
 * U axis for the table.  Configured for 1/4" 20 TPI threaded rod driven by a 400 step motor, 8x microstepping via a 48:20 belt reduction.
 * Z axis which does not move the table at all but instead activates the laser when Z<0.  This provides some "instant compatibility" with mill/router CAM.
 
-There is some minor customization to Axis, the primary EMC2 GUI.  Some
+There is some minor customization to Axis, the primary LinuxCNC GUI.  Some
 of the viewing angle buttons have been eliminated and page up/down have
 been shifted to the U (table) axis.
 
@@ -77,10 +77,10 @@ Raster Engraving
 
 Raster operation is done by calling a subroutine O145 from within gcode
 with several parameters.  It invokes M144 and M145 which are external
-python scripts.  Those stream data back into EMC2's realtime engine while
+python scripts.  Those stream data back into LinuxCNC's realtime engine while
 the subroutine in O145 sweeps out the raster pattern.
 
-Due to limitations in EMC2 there is no way to pass a filename for the
+Due to limitations in LinuxCNC there is no way to pass a filename for the
 rastering process.  Instead you must put a number in the filename, such
 as "flower-123.png".  The text name is for your convenience, but only the
 "123" will select the image from within gcode.  The program will search for
@@ -151,13 +151,13 @@ and the overscan is 0.5".
 Installation
 ============
 
-This is based on an installed copy of the EMC2 Ubuntu 10.04 LTS Live CD.
+This is based on an installed copy of the LinuxCNC Ubuntu 10.04 LTS Live CD.
 
 Install the custom laser pulse HAL component.  The first command installs
 the necessary tools in case you don't have them.  For more information see
 http://wiki.linuxcnc.org/emcinfo.pl?ContributedComponents
 
-    sudo apt-get install emc2-dev build-essential
+    sudo apt-get install linuxcnc-dev build-essential
     sudo comp --install laserfreq.comp
 
 The configuration will not work without that component installed.
@@ -168,8 +168,8 @@ with the path to your own configuration.
 Configuration
 =============
 
-You must first get EMC2's realtime configuration sorted out on your hardware.
-There is extensive documentation for this online based around the EMC2
+You must first get LinuxCNC's realtime configuration sorted out on your hardware.
+There is extensive documentation for this online based around the LinuxCNC
 latency-test program:  http://wiki.linuxcnc.org/emcinfo.pl?Latency-Test
 
 My system was able to use a [EMCMOT]BASE_PERIOD of 27000 (27us) which
@@ -184,7 +184,7 @@ in 2x_Laser.ini.  Ignore AXIS_2, it is the imaginary Z axis.
 My build resulted in a maximum travel of 285x535mm.  These are the
 [AXIS_0]MAX_LIMIT and [AXIS_1]MAX_LIMIT.  Setting these correctly will keep
 you from banging into the physical endstops.  The 2.x build homes in the
-lower left, but you can cause EMC2 to automatically reposition anywhere
+lower left, but you can cause LinuxCNC to automatically reposition anywhere
 after homing with the [AXIS_0]HOME and [AXIS_1]HOME.
 
 If any axis moves backwards from what you expect, modify the parport
@@ -213,3 +213,6 @@ Dirk Van Essendelft has done numerous experiments in DIY lasercutting
 which he has documented on the buildlog.net forums.  His research into the
 behavior of PPI with our CO2 lasers lead to improved the performance of the
 PPI implementation in this configuration.
+
+Jeremy Van Grinsven was an early adopter and has shared his changes with
+his fork on github with improvements and new ideas.
