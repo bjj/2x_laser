@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import os, re
-import emc
+import linuxcnc
 
 emc_ini = None
 
 def open_raster_fifo(mode):
     global emc_ini
     if emc_ini is None:
-	emc_ini = emc.ini('2x_Laser.ini')
+	emc_ini = linuxcnc.ini('2x_Laser.ini')
     pipefile = emc_ini.find('RASTER', 'PIPE_FILE')
 
     if pipefile is None:

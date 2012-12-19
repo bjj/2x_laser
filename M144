@@ -6,7 +6,7 @@ from itertools import *
 from PIL import Image
 from raster_utils import *
 from raster_gui import *
-import emc
+import linuxcnc
 
 P, Q = map(lambda x: float(x), sys.argv[1:])
 
@@ -16,23 +16,23 @@ except KeyError:
     INI_FILE_NAME = '2x_Laser.ini'
 
 try:
-    ini = emc.ini(INI_FILE_NAME)
-except emc.error:
-    fatal('Expected EMC2 configuration in %s' % INI_FILE_NAME)
+    ini = linuxcnc.ini(INI_FILE_NAME)
+except linuxcnc.error:
+    fatal('Expected LinuxCNC configuration in %s' % INI_FILE_NAME)
 
-emc.nmlfile = ini.find('EMC', 'NML_FILE')
-if emc.nmlfile is None:
+linuxcnc.nmlfile = ini.find('EMC', 'NML_FILE')
+if linuxcnc.nmlfile is None:
     fatal('Expected [EMC]NML_FILE in INI')
 
 axis = ini.find('RASTER', 'AXIS')
 if axis is None:
     axis = 0
 
-stat = emc.stat()
+stat = linuxcnc.stat()
 
-# Origin contains the G92 and G5x work offsets so we can translate
+# Get the G92 and G5x work offsets so we can translate
 stat.poll()
-origin = stat.origin[axis]
+origin = stat.g5x_offset[axis] + stat.g92_offset[axis]
 
 if stat.current_line < 0:
     fatal('cannot execute M144 from MDI')
