@@ -30,11 +30,23 @@ addf motion-controller servo-thread
 
 ########################
 
-net laser-power-cmd <= motion.analog-out-00 => hm2_5i25.0.pwmgen.00.value
+# use mult2 + blend to map 0..100% power at "M68 E0 Qxxx" to the PWM output
+# range that gives minimum to full laser power
+loadrt blend names=scaled_power
+loadrt mult2 names=percent_power
+addf percent_power servo-thread
+addf scaled_power servo-thread
+setp percent_power.in0 0.01
+net laser-power-pct <= motion.analog-out-00 => percent_power.in1
+setp scaled_power.in1 [LASER]POWER_PWM_MAX 
+setp scaled_power.in2 [LASER]POWER_PWM_MIN 
+setp scaled_power.open 0
+net laser-power-frac <= percent_power.out => scaled_power.select
+
+net laser-power-cmd <= scaled_power.out => hm2_5i25.0.pwmgen.00.value
 setp hm2_5i25.0.pwmgen.pwm_frequency 20000
 setp hm2_5i25.0.pwmgen.pdm_frequency 20000
 setp hm2_5i25.0.pwmgen.00.enable 1
-# XXX ADJUST
 setp hm2_5i25.0.pwmgen.00.scale 1
 setp hm2_5i25.0.pwmgen.00.output-type 1
 

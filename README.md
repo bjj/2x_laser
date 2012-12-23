@@ -31,21 +31,18 @@ Laser control
 
 Laser firing control is on parallel port pin 17.
 
-Set laser power with M68 E0 Qxxx where xxx is a number from 0.0 to 1.0.
-It is likely that your printer port's PWM output at 1.0 will be *more
-than 100% power* for your laser.  In my case my laser PSU current is
-20mA when there is 3V at the IN terminal.  My parallel port's "on"
-voltage is about 4.3V, so M68 E0 Q0.7 produces full power for my setup.
-Below about 0.5V (or Q0.012) my laser will not fire.  This power setting
+Set laser power with M68 E0 Qxxx where xxx is a number from 0 to 100.
+See the Configuration section for a discussion of how percent power
+maps to a PWM command at parallel port pin 14.  This power setting
 can generally go in the preamble of your CAM setup since you will vary
 PPI and speed rather than power for most cutting jobs.
 
 Enable the laser with M3 Sxx where the spindle speed xx is in "pulses
 per mm" (or about 1/25th a PPI or "pulses per inch" setting).  M3 S0 is
 equivalent to "off" (or M5) and the laser will not fire.  Based on Dirk's
-research the pulse length is set (in 2x_Laser.ini) to 3ms, so you can get
+research the pulse length is set (in 2x_Laser.ini) to 2.5ms, so you can get
 continuous wave output by simply picking a high enough S value for your
-feed rate that pulses happen more frequently than 3ms (e.g. S10000 is
+feed rate that pulses happen more frequently than 2.5ms (e.g. S10000 is
 continuous for anything faster than F2).
 
 If you choose direct digital control of the laser, use M65 P0 ("immediate
@@ -102,7 +99,7 @@ The O145 script will operate in inches or mm (G20 or G21) and all sizes
 just need to be in the appropriate units:
 
     M3 S1         (enable spindle)
-    M68 E0 Q0.2   (choose an engraving power)
+    M68 E0 Q25    (choose an engraving power)
     F28200        (choose an engraving feed rate)
     O145 call [pic] [x] [y] [w] [h] [x-gap] [y-gap] [overscan]
 
@@ -139,7 +136,7 @@ Example:
 
     G20            ( set inches mode )
     M3 S20
-    M68 E0 Q0.5
+    M68 E0 Q60
     F1110
     O145 call [1587] [0.2133] [10.2867] [10.0733] [10.0733] [0.0033] [0.0033] [0.5]
 
@@ -171,6 +168,15 @@ Configuration
 You must first get LinuxCNC's realtime configuration sorted out on your hardware.
 There is extensive documentation for this online based around the LinuxCNC
 latency-test program:  http://wiki.linuxcnc.org/emcinfo.pl?Latency-Test
+
+The [LASER] stanza of the 2x_Laser.ini file describes properties of your
+laser tube:
+
+* EXTRA_CHILLER_TIME determines how long the chiller relay will stay on after the laser has been in use (with master enable with M3)
+* PULSED_CUT_DURATION is the duration in seconds of each pulse of the laser when using PPI (with M3 Sxxx to set pulses per millimeter)
+* PULSED_CUT_CONTINUOUS is the minimum off time in second if the PPI setting is so high that pulses would overlap.  If it's not zero it forces pulsing (as fast as possible) rather than continuous firing.
+* POWER_PWM_MIN is the minimum PWM duty cycle (maps to 0% power with M68 E0 Qxxx).
+* POWER_PWM_MAX is the maximum PWM duty cycle (maps to 100% power).  This should be calibrated for your laser tube to avoid overdriving it.  A 40W CO2 laser should draw about 18mA.
 
 My system was able to use a [EMCMOT]BASE_PERIOD of 27000 (27us) which
 (along with the microstepping setting) dictates my system's maximum velocity.
