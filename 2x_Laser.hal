@@ -5,101 +5,102 @@
 loadrt threads name1=laser-thread period1=[EMCMOT]BASE_PERIOD
 
 loadrt trivkins
-loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES
-loadrt probe_parport
-loadrt hal_parport cfg="0x378 out"
-setp parport.0.reset-time 1000
-loadrt stepgen step_type=0,0,0
-loadrt pwmgen output_type=0
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AXES
 
-addf parport.0.read base-thread
-addf stepgen.make-pulses base-thread
+# In case the need for the original parallel port on my system arises...
+#loadrt probe_parport
+#loadrt hal_parport cfg="0x378 out"
+#setp parport.0.reset-time 1000
+#addf parport.0.read base-thread
+#addf parport.0.write base-thread
+#addf parport.0.reset base-thread
+
+loadrt hostmot2
+# 5i25 has flash config, assume g540x2.bit, compatible with Bart's laser board
+loadrt hm2_pci config="num_encoders=0 num_pwmgens=1 num_stepgens=3 num_encoders=0 num_resolvers=0"
+addf hm2_5i25.0.read servo-thread
+addf hm2_5i25.0.write servo-thread
+addf hm2_5i25.0.pet_watchdog servo-thread
+
 # need capture-position in laser-thread for raster engraving:
-addf stepgen.capture-position laser-thread
-addf pwmgen.make-pulses base-thread
-addf parport.0.write base-thread
-addf parport.0.reset base-thread
+###addf hm2_5i25.0.stepgen.capture-position laser-thread
 
 addf motion-command-handler servo-thread
 addf motion-controller servo-thread
-addf stepgen.update-freq servo-thread
-addf pwmgen.update servo-thread
 
-net laser-power-cmd <= motion.analog-out-00 => pwmgen.0.value
-net laser-pwm <= pwmgen.0.pwm
-# or tie pwmgen.0.enable to dout-00??
-setp pwmgen.0.enable 1
-# pwm-freq 0 means PDM (pulse density modulation)
-setp pwmgen.0.pwm-freq 0
-setp pwmgen.0.scale 1
-setp pwmgen.0.offset 0
-setp pwmgen.0.dither-pwm true
+########################
+
+net laser-power-cmd <= motion.analog-out-00 => hm2_5i25.0.pwmgen.00.value
+setp hm2_5i25.0.pwmgen.pwm_frequency 20000
+setp hm2_5i25.0.pwmgen.pdm_frequency 20000
+setp hm2_5i25.0.pwmgen.00.enable 1
+# XXX ADJUST
+setp hm2_5i25.0.pwmgen.00.scale 1
+setp hm2_5i25.0.pwmgen.00.output-type 1
+
+########################
 
 net dout-02 <= motion.digital-out-02
 net din-02 => motion.digital-in-02
 
-net laser-chiller => parport.0.pin-01-out
-net xstep => parport.0.pin-02-out
-setp parport.0.pin-02-out-reset 1
-net xdir => parport.0.pin-03-out
-setp parport.0.pin-03-out-invert 1
-net ystep => parport.0.pin-04-out
-setp parport.0.pin-04-out-reset 1
-net ydir => parport.0.pin-05-out
-setp parport.0.pin-05-out-invert 1
-net ustep => parport.0.pin-06-out
-setp parport.0.pin-06-out-reset 1
-net udir => parport.0.pin-07-out
-setp parport.0.pin-07-out-invert 1
-net dout-02 => parport.0.pin-08-out
-net laser-pwm => parport.0.pin-14-out
-net xenable => parport.0.pin-16-out
-net laser-final => parport.0.pin-17-out
+net laser-chiller => hm2_5i25.0.gpio.000.out
+setp hm2_5i25.0.gpio.000.is_output 1
+# xdir invert
+setp hm2_5i25.0.gpio.004.invert_output 1
+# ydir invert
+setp hm2_5i25.0.gpio.008.invert_output 1
+# udir invert
+setp hm2_5i25.0.gpio.010.invert_output 1
 
-net home-x <= parport.0.pin-10-in-not
-net home-y <= parport.0.pin-11-in-not
+net dout-02 => hm2_5i25.0.gpio.011.out
+setp hm2_5i25.0.gpio.011.is_output 1
+net xenable => hm2_5i25.0.gpio.005.out
+setp hm2_5i25.0.gpio.005.is_output 1
+net laser-final => hm2_5i25.0.gpio.007.out
+setp hm2_5i25.0.gpio.007.is_output 1
 
-net din-02 <= parport.0.pin-13-in
+net home-x <= hm2_5i25.0.gpio.013.in_not
+setp hm2_5i25.0.gpio.013.is_output 0
+net home-y <= hm2_5i25.0.gpio.014.in_not
+setp hm2_5i25.0.gpio.014.is_output 0
+
+net din-02 <= hm2_5i25.0.gpio.016.in
+setp hm2_5i25.0.gpio.016.is_output 0
 
 # based on Pololu drivers with Allegro drivers (1us ea hi/lo step, 200ns dir setup/hold)
-setp stepgen.0.position-scale [AXIS_0]SCALE
-setp stepgen.0.steplen 1000
-setp stepgen.0.stepspace 0
-setp stepgen.0.dirhold 200
-setp stepgen.0.dirsetup 200
-setp stepgen.0.maxaccel [AXIS_0]STEPGEN_MAXACCEL
-net xpos-cmd axis.0.motor-pos-cmd => stepgen.0.position-cmd
-net xpos-fb stepgen.0.position-fb => axis.0.motor-pos-fb
-net xstep <= stepgen.0.step
-net xdir <= stepgen.0.dir
-net xenable axis.0.amp-enable-out => stepgen.0.enable
+setp hm2_5i25.0.stepgen.00.position-scale [AXIS_0]SCALE
+setp hm2_5i25.0.stepgen.00.steplen [STEPPER_DRIVER]STEPLEN
+setp hm2_5i25.0.stepgen.00.stepspace [STEPPER_DRIVER]STEPSPACE
+setp hm2_5i25.0.stepgen.00.dirsetup [STEPPER_DRIVER]DIRSETUP
+setp hm2_5i25.0.stepgen.00.dirhold [STEPPER_DRIVER]DIRHOLD
+setp hm2_5i25.0.stepgen.00.maxaccel [AXIS_0]STEPGEN_MAXACCEL
+net xpos-cmd axis.0.motor-pos-cmd => hm2_5i25.0.stepgen.00.position-cmd
+net xpos-fb hm2_5i25.0.stepgen.00.position-fb => axis.0.motor-pos-fb
+net xenable axis.0.amp-enable-out => hm2_5i25.0.stepgen.00.enable
 net home-x => axis.0.home-sw-in
 
-setp stepgen.1.position-scale [AXIS_1]SCALE
-setp stepgen.1.steplen 1000
-setp stepgen.1.stepspace 0
-setp stepgen.1.dirhold 200
-setp stepgen.1.dirsetup 200
-setp stepgen.1.maxaccel [AXIS_1]STEPGEN_MAXACCEL
-net ypos-cmd axis.1.motor-pos-cmd => stepgen.1.position-cmd
-net ypos-fb stepgen.1.position-fb => axis.1.motor-pos-fb
-net ystep <= stepgen.1.step
-net ydir <= stepgen.1.dir
-net yenable axis.1.amp-enable-out => stepgen.1.enable
+setp hm2_5i25.0.stepgen.01.position-scale [AXIS_1]SCALE
+setp hm2_5i25.0.stepgen.01.steplen [STEPPER_DRIVER]STEPLEN
+setp hm2_5i25.0.stepgen.01.stepspace [STEPPER_DRIVER]STEPSPACE
+setp hm2_5i25.0.stepgen.01.dirsetup [STEPPER_DRIVER]DIRSETUP
+setp hm2_5i25.0.stepgen.01.dirhold [STEPPER_DRIVER]DIRHOLD
+setp hm2_5i25.0.stepgen.01.maxaccel [AXIS_1]STEPGEN_MAXACCEL
+net ypos-cmd axis.1.motor-pos-cmd => hm2_5i25.0.stepgen.01.position-cmd
+net ypos-fb hm2_5i25.0.stepgen.01.position-fb => axis.1.motor-pos-fb
+net yenable <= axis.1.amp-enable-out => hm2_5i25.0.stepgen.01.enable
 net home-y => axis.1.home-sw-in
 
-setp stepgen.2.position-scale [AXIS_6]SCALE
-setp stepgen.2.steplen 1000
-setp stepgen.2.stepspace 0
-setp stepgen.2.dirhold 200
-setp stepgen.2.dirsetup 200
-setp stepgen.2.maxaccel [AXIS_6]STEPGEN_MAXACCEL
-net upos-cmd axis.6.motor-pos-cmd => stepgen.2.position-cmd
-net upos-fb stepgen.2.position-fb => axis.6.motor-pos-fb
-net ustep <= stepgen.2.step
-net udir <= stepgen.2.dir
-net uenable axis.6.amp-enable-out => stepgen.2.enable
+setp hm2_5i25.0.stepgen.02.position-scale [AXIS_6]SCALE
+setp hm2_5i25.0.stepgen.02.steplen [STEPPER_DRIVER]STEPLEN
+setp hm2_5i25.0.stepgen.02.stepspace [STEPPER_DRIVER]STEPSPACE
+setp hm2_5i25.0.stepgen.02.dirsetup [STEPPER_DRIVER]DIRSETUP
+setp hm2_5i25.0.stepgen.02.dirhold [STEPPER_DRIVER]DIRHOLD
+setp hm2_5i25.0.stepgen.02.maxaccel [AXIS_6]STEPGEN_MAXACCEL
+net upos-cmd axis.6.motor-pos-cmd => hm2_5i25.0.stepgen.02.position-cmd
+net upos-fb hm2_5i25.0.stepgen.02.position-fb => axis.6.motor-pos-fb
+net uenable <= axis.6.amp-enable-out => hm2_5i25.0.stepgen.02.enable
 
+# Z is fake so that router/mill CAM can work, see "magic-z"
 net zpos-cmd-fb <= axis.2.motor-pos-cmd => axis.2.motor-pos-fb
 
 net estop-out <= iocontrol.0.user-enable-out
@@ -120,6 +121,7 @@ net laser-dout <= motion.digital-out-00
 
 loadrt laserfreq
 addf laserfreq.0.make-pulses laser-thread
+addf hm2_5i25.0.write_gpio laser-thread
 addf laserfreq.0.update servo-thread
 setp laserfreq.0.duration [LASER]PULSED_CUT_DURATION
 setp laserfreq.0.min-off-duration [LASER]PULSED_CUT_CONTINUOUS
